@@ -1,10 +1,44 @@
 
 angular.module('weatherNews', ['ui.router'])
 
-.factory('postFactory', [function(){
+.factory('postHandler', ['$http', function($http){
     var o = {
-        posts: []
+        posts: [],
+        curPost: {}
     };
+
+    o.getAll = function() {
+        return $http.get('/posts').success( function(data) {
+            angular.copy(data, o.posts);
+        });
+    };
+
+    o.create = function(post) {
+        return $http.post('/posts', post).success(function(data) {
+            o.posts.push(data);
+        });
+    };
+
+    o.upvote = function(post) {
+        return $http.put('/posts/' + post._id + '/upvote')
+        .success( function(data) {
+            post.upvotes ++;
+        });
+    };
+
+    o.getPost = function(id) {
+        return $http.get('/posts/' + id) .success( function(data) {
+            angular.copy(data, o.curPost);
+        });
+    }
+
+    o.addComment = function(id, comment) {
+        return $http.post('/posts/' + id + '/comments', comment)
+        .success( function(data) {
+            o.post.comments.push(comment);
+        });
+    };
+
     return o;
 }])
 
@@ -13,33 +47,38 @@ angular.module('weatherNews', ['ui.router'])
     '$urlRouterProvider',
     function($stateProvider, $urlRouterProvider) {
         $stateProvider
+
         .state('home', {
             url: '/home',
             templateUrl: '/home.html',
             controller: 'MainCtrl'
         })
+
         .state('posts', {
             url: '/posts/{id}',
             templateUrl: '/posts.html',
             controller: 'PostCtrl'
         });
+
         $urlRouterProvider.otherwise('home');
     }
 ])
 
 .controller('MainCtrl', [
     '$scope',
-    'postFactory',
-    function($scope, postFactory) {
-        $scope.posts = postFactory.posts;
+    'postHandler',
+    function($scope, postHandler) {
+        postHandler.getAll();
+        $scope.posts = postHandler.posts;
 
         $scope.addPost = function() {
-            $scope.posts.push({title: $scope.formContent, upvotes: 0});
+            if ($scope.formContent === '') return;
+            postHandler.create({title: $scope.formContent, upvotes: 0});
             $scope.formContent = '';
         };
 
         $scope.upvote = function(post) {
-            post.upvotes ++;
+            postHandler.upvote(post);
         }
     }
 ])
@@ -47,16 +86,16 @@ angular.module('weatherNews', ['ui.router'])
 .controller('PostCtrl', [
     '$scope',
     '$stateParams',
-    'postFactory',
-    function($scope, $stateParams, postFactory){
-        $scope.post = postFactory.posts[$stateParams.id];
+    'postHandler',
+    function($scope, $stateParams, postHandler){
+        var curPost = postHandler.posts[$stateParams.id];
+        if (curPost == undefined) return;
+        postHandler.getPost(curPost._id);
+        $scope.post = postHandler.curPost;
 
         $scope.addComment = function() {
             if ($scope.body === '') return;
-            if ($scope.post.comments === undefined) {
-                $scope.post.comments = [];
-            }
-            $scope.post.comments.push({
+            postHandler.addComment(curPost._id, {
                 body: $scope.body,
                 upvotes: 0
             });

@@ -8,6 +8,7 @@
         <script type='text/javascript' src="javascripts/angularApp.js"></script>
     </head>
     <body ng-app="weatherNews">
+
         <script type='text/ng-template' id='/home.html' ng-controller="MainCtrl">
             <div class="page-header">
                 <h1>Weather News</h1>
@@ -22,6 +23,7 @@
                 <button type='submit'>Post</button>
             </form>
         </script>
+
         <script type='text/ng-template' id='/posts.html' ng-controller="PostCtrl">
             <div class="page-header">
                 <h1>{{post.title}}</h1>
@@ -35,8 +37,10 @@
                 <button type='submit'>Post</button>
             </form>
         </script>
+
         <div class="row"> <div class="col-md-6 col-md-offset-3">
             <ui-view></ui-view>
         </div></div>
+
     </body>
 </html>
