@@ -32,12 +32,16 @@ angular.module('weatherNews', ['ui.router'])
         });
     }
 
-    o.addComment = function(id, comment) {
-        return $http.post('/posts/' + id + '/comments', comment)
-        .success( function(data) {
-            o.post.comments.push(comment);
-        });
+    o.addComment = function(id, commentArray, comment) {
+        return $http.post('/posts/' + id + '/comments', comment);
     };
+
+    o.upvoteComment = function(id, comment) {
+        return $http.put('/posts/' + id + '/comments/' + comment._id + '/upvote')
+        .success( function(data) {
+            comment.upvotes ++;
+        });
+    }
 
     return o;
 }])
@@ -95,15 +99,19 @@ angular.module('weatherNews', ['ui.router'])
 
         $scope.addComment = function() {
             if ($scope.body === '') return;
-            postHandler.addComment(curPost._id, {
+            postHandler.addComment(curPost._id, curPost.comments, {
                 body: $scope.body,
                 upvotes: 0
+            })
+            .success( function(comment) {
+                postHandler.curPost.comments.push(comment);
+                curPost.comments.push(comment);
             });
             $scope.body = '';
         };
 
-        $scope.upvote = function(comment){
-            comment.upvotes += 1;
+        $scope.upvote = function(comment) {
+            postHandler.upvoteComment(curPost._id, comment);
         };
     }
 ])
